@@ -206,3 +206,85 @@ export const locations = [
   'Chicago, IL',
   'Los Angeles, CA',
 ];
+
+export interface Organization {
+  id: string;
+  name: string;
+  description: string;
+  location: string;
+  establishedYear: number;
+  employeeCount: string;
+  activeJobs: number;
+  email: string;
+  phone: string;
+  website: string;
+  specializations: string[];
+}
+
+export const mockOrganizations: Organization[] = [
+  {
+    id: '1',
+    name: 'MIT University',
+    description: 'The Massachusetts Institute of Technology is a private research university renowned for its cutting-edge research and education in science, technology, engineering, and mathematics. MIT has been ranked among the top universities in the world and continues to lead in innovation and academic excellence.',
+    location: 'Cambridge, MA',
+    establishedYear: 1861,
+    employeeCount: '12,000+',
+    activeJobs: 15,
+    email: 'careers@mit.edu',
+    phone: '+1 (617) 253-1000',
+    website: 'https://www.mit.edu',
+    specializations: ['Computer Science', 'Engineering', 'Physics', 'Mathematics', 'AI Research'],
+  },
+  {
+    id: '2',
+    name: 'Stanford University',
+    description: 'Stanford University is a leading private research university located in Silicon Valley. Known for its entrepreneurial spirit and proximity to tech industry leaders, Stanford excels in research, innovation, and producing world-class graduates who go on to shape the future.',
+    location: 'Stanford, CA',
+    establishedYear: 1885,
+    employeeCount: '15,000+',
+    activeJobs: 12,
+    email: 'hr@stanford.edu',
+    phone: '+1 (650) 723-2300',
+    website: 'https://www.stanford.edu',
+    specializations: ['Computer Science', 'Business', 'Medicine', 'Law', 'Engineering'],
+  },
+  {
+    id: '3',
+    name: 'Harvard University',
+    description: 'Harvard University is the oldest institution of higher education in the United States. As a world-renowned research university, Harvard is committed to excellence in teaching, learning, and research, and to developing leaders who make a difference globally.',
+    location: 'Cambridge, MA',
+    establishedYear: 1636,
+    employeeCount: '18,000+',
+    activeJobs: 20,
+    email: 'faculty@harvard.edu',
+    phone: '+1 (617) 495-1000',
+    website: 'https://www.harvard.edu',
+    specializations: ['Law', 'Medicine', 'Business', 'Physics', 'Liberal Arts'],
+  },
+  {
+    id: '4',
+    name: 'Yale University',
+    description: 'Yale University is a distinguished private Ivy League research university known for its outstanding liberal arts education, professional schools, and commitment to research across all disciplines. Yale has produced numerous leaders in arts, sciences, and public service.',
+    location: 'New Haven, CT',
+    establishedYear: 1701,
+    employeeCount: '14,000+',
+    activeJobs: 10,
+    email: 'careers@yale.edu',
+    phone: '+1 (203) 432-4771',
+    website: 'https://www.yale.edu',
+    specializations: ['English', 'Drama', 'Law', 'Medicine', 'History'],
+  },
+  {
+    id: '5',
+    name: 'Princeton University',
+    description: 'Princeton University is a prestigious private Ivy League university with a strong emphasis on undergraduate education and groundbreaking research. The university is known for its beautiful campus, distinguished faculty, and commitment to academic excellence.',
+    location: 'Princeton, NJ',
+    establishedYear: 1746,
+    employeeCount: '8,000+',
+    activeJobs: 8,
+    email: 'jobs@princeton.edu',
+    phone: '+1 (609) 258-3000',
+    website: 'https://www.princeton.edu',
+    specializations: ['Mathematics', 'Chemistry', 'Economics', 'Physics', 'Public Policy'],
+  },
+];
