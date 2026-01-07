@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { JobCard } from '@/components/jobs/JobCard';
-import { mockJobs, subjects, experienceLevels, locations } from '@/lib/mockData';
+import { mockJobs, subjects, experienceLevels, locations, Job } from '@/lib/mockData';
 import { Search, Filter, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -22,6 +22,8 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { useToast } from '@/hooks/use-toast';
+import { ApplyJobDialog } from '@/components/jobs/ApplyJobDialog';
+import { OrganizationDetailsDialog } from '@/components/jobs/OrganizationDetailsDialog';
 
 export default function JobListings() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -31,6 +33,9 @@ export default function JobListings() {
   const [pinnedJobs, setPinnedJobs] = useState<string[]>([]);
   const [favoriteJobs, setFavoriteJobs] = useState<string[]>([]);
   const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const filteredJobs = mockJobs.filter((job) => {
@@ -52,11 +57,23 @@ export default function JobListings() {
   };
 
   const handleApply = (jobId: string) => {
+    const job = mockJobs.find(j => j.id === jobId);
+    if (job) {
+      setSelectedJob(job);
+      setApplyDialogOpen(true);
+    }
+  };
+
+  const handleApplySuccess = (jobId: string) => {
     setAppliedJobs([...appliedJobs, jobId]);
-    toast({
-      title: 'Application Submitted',
-      description: 'Your application has been submitted successfully.',
-    });
+  };
+
+  const handleViewDetails = (jobId: string) => {
+    const job = mockJobs.find(j => j.id === jobId);
+    if (job) {
+      setSelectedJob(job);
+      setDetailsDialogOpen(true);
+    }
   };
 
   const handlePin = (jobId: string) => {
@@ -247,7 +264,7 @@ export default function JobListings() {
               key={job.id}
               job={job}
               onApply={handleApply}
-              onViewDetails={(id) => console.log('View:', id)}
+              onViewDetails={handleViewDetails}
               onPin={handlePin}
               onFavorite={handleFavorite}
               isPinned={pinnedJobs.includes(job.id)}
@@ -264,6 +281,21 @@ export default function JobListings() {
           </div>
         )}
       </div>
+
+      {/* Apply Job Dialog */}
+      <ApplyJobDialog
+        job={selectedJob}
+        open={applyDialogOpen}
+        onOpenChange={setApplyDialogOpen}
+        onApplySuccess={handleApplySuccess}
+      />
+
+      {/* Organization Details Dialog */}
+      <OrganizationDetailsDialog
+        job={selectedJob}
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+      />
     </DashboardLayout>
   );
 }
