@@ -1,6 +1,5 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { mockJobs } from '@/lib/mockData';
-import { MapPin, Users, Calendar, MoreVertical, Eye, Edit, Trash2 } from 'lucide-react';
+import { MapPin, Users, Calendar, MoreVertical, Eye, Edit, Trash2, FileWarning } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,9 +10,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useNavigate } from 'react-router-dom';
+import { useJobs } from '@/contexts/JobContext';
 
 export default function ManageJobs() {
   const navigate = useNavigate();
+  const { jobs, removeJob } = useJobs();
 
   return (
     <DashboardLayout>
@@ -22,7 +23,7 @@ export default function ManageJobs() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold text-foreground">Manage Jobs</h1>
-            <p className="text-muted-foreground mt-1">{mockJobs.length} active job postings</p>
+            <p className="text-muted-foreground mt-1">{jobs.length} active job postings</p>
           </div>
           <Button onClick={() => navigate('/organization/post-job')}>
             Post New Job
@@ -31,7 +32,7 @@ export default function ManageJobs() {
 
         {/* Jobs List */}
         <div className="space-y-4">
-          {mockJobs.map((job) => (
+          {jobs.map((job) => (
             <Card key={job.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between">
@@ -66,7 +67,7 @@ export default function ManageJobs() {
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Job
                       </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem className="text-destructive" onClick={() => removeJob(job.id)}>
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete Job
                       </DropdownMenuItem>
@@ -94,6 +95,12 @@ export default function ManageJobs() {
               </CardContent>
             </Card>
           ))}
+          {jobs.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-3">
+              <FileWarning className="h-10 w-10" />
+              <p>No jobs posted yet. Click "Post New Job" to create one.</p>
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>

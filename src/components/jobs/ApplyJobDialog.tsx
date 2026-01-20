@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Job, subjects, experienceLevels } from '@/lib/mockData';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Job } from '@/contexts/JobContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -10,49 +12,64 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ApplyJobDialogProps {
   job: Job | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onApplySuccess: (jobId: string) => void;
+  onApplySuccess: (jobId: string, applicantData: { name: string; email: string; qualification: string; experience: string }) => void;
 }
-
-const qualifications = [
-  'B.A.',
-  'B.Sc.',
-  'M.A.',
-  'M.Sc.',
-  'M.Phil.',
-  'Ph.D.',
-  'Post-Doctoral',
-];
 
 export function ApplyJobDialog({ job, open, onOpenChange, onApplySuccess }: ApplyJobDialogProps) {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { facultyProfile, isProfileComplete } = useAuth();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     phone: '',
     qualification: '',
     subjectExpertise: '',
-    experience: '',
+    yearsOfExperience: '',
     resume: null as File | null,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Auto-fill form from profile when dialog opens
+  useEffect(() => {
+    if (open && facultyProfile) {
+      setFormData({
+        fullName: facultyProfile.fullName,
+        email: facultyProfile.email,
+        phone: facultyProfile.phone,
+        qualification: facultyProfile.qualification,
+        subjectExpertise: facultyProfile.subjectExpertise,
+        yearsOfExperience: facultyProfile.yearsOfExperience,
+        resume: null,
+      });
+    }
+  }, [open, facultyProfile]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if profile is complete
+    if (!isProfileComplete()) {
+      toast({
+        title: 'Incomplete Profile',
+        description: 'Please complete your profile before applying for jobs.',
+        variant: 'destructive',
+      });
+      onOpenChange(false);
+      navigate('/faculty/profile');
+      return;
+    }
     
     if (!formData.fullName || !formData.email || !formData.phone || 
-        !formData.qualification || !formData.subjectExpertise || !formData.experience) {
+        !formData.qualification || !formData.subjectExpertise || !formData.yearsOfExperience) {
       toast({
         title: 'Missing Information',
         description: 'Please fill in all required fields.',
@@ -61,23 +78,19 @@ export function ApplyJobDialog({ job, open, onOpenChange, onApplySuccess }: Appl
       return;
     }
 
+    setIsSubmitting(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 800));
+
     if (job) {
-      onApplySuccess(job.id);
-      toast({
-        title: 'Application Submitted!',
-        description: `Your application for ${job.title} at ${job.institution} has been submitted successfully.`,
+      onApplySuccess(job.id, {
+        name: formData.fullName,
+        email: formData.email,
+        qualification: formData.qualification,
+        experience: formData.yearsOfExperience,
       });
+      setIsSubmitting(false);
       onOpenChange(false);
-      // Reset form
-      setFormData({
-        fullName: '',
-        email: '',
-        phone: '',
-        qualification: '',
-        subjectExpertise: '',
-        experience: '',
-        resume: null,
-      });
     }
   };
 
@@ -96,6 +109,43 @@ export function ApplyJobDialog({ job, open, onOpenChange, onApplySuccess }: Appl
     }
   };
 
+  // Show incomplete profile message
+  if (!isProfileComplete()) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Complete Your Profile First</DialogTitle>
+            <DialogDescription>
+              Set up your profile to apply for jobs
+            </DialogDescription>
+          </DialogHeader>
+          <Alert className="border-amber-500/50 bg-amber-500/5 mt-4">
+            <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+            <AlertTitle className="text-amber-700 dark:text-amber-400">Profile Incomplete</AlertTitle>
+            <AlertDescription className="text-amber-700/80 dark:text-amber-400/80 mt-2">
+              To apply for positions, please complete all required fields in your profile. This ensures employers have all the information they need to review your application.
+            </AlertDescription>
+          </Alert>
+          <div className="flex gap-3 pt-4">
+            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="flex-1"
+              onClick={() => {
+                onOpenChange(false);
+                navigate('/faculty/profile');
+              }}
+            >
+              Complete Profile
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
@@ -105,88 +155,79 @@ export function ApplyJobDialog({ job, open, onOpenChange, onApplySuccess }: Appl
             {job?.title} at {job?.institution}
           </DialogDescription>
         </DialogHeader>
+        
+        {/* Profile Complete Status */}
+        <Alert className="border-green-500/50 bg-green-500/5">
+          <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-700 dark:text-green-400 ml-2">
+            Using your profile information. Update it from your Profile page.
+          </AlertDescription>
+        </Alert>
+
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name *</Label>
+            <Label htmlFor="fullName">Full Name</Label>
             <Input
               id="fullName"
-              placeholder="Enter your full name"
               value={formData.fullName}
-              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              disabled
+              className="bg-muted/50 cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground">Update from your Profile page</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
               value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              disabled
+              className="bg-muted/50 cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground">Update from your Profile page</p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number *</Label>
+            <Label htmlFor="phone">Phone Number</Label>
             <Input
               id="phone"
               type="tel"
-              placeholder="Enter your phone number"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              disabled
+              className="bg-muted/50 cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground">Update from your Profile page</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Highest Qualification *</Label>
-            <Select
+            <Label>Highest Qualification</Label>
+            <Input
               value={formData.qualification}
-              onValueChange={(value) => setFormData({ ...formData, qualification: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select qualification" />
-              </SelectTrigger>
-              <SelectContent>
-                {qualifications.map((qual) => (
-                  <SelectItem key={qual} value={qual}>{qual}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              disabled
+              className="bg-muted/50 cursor-not-allowed"
+            />
+            <p className="text-xs text-muted-foreground">Update from your Profile page</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Subject Expertise *</Label>
-            <Select
+            <Label>Subject Expertise</Label>
+            <Input
               value={formData.subjectExpertise}
-              onValueChange={(value) => setFormData({ ...formData, subjectExpertise: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select subject" />
-              </SelectTrigger>
-              <SelectContent>
-                {subjects.map((subject) => (
-                  <SelectItem key={subject} value={subject}>{subject}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              disabled
+              className="bg-muted/50 cursor-not-allowed"
+            />
+            <p className="text-xs text-muted-foreground">Update from your Profile page</p>
           </div>
 
           <div className="space-y-2">
-            <Label>Experience (Years) *</Label>
-            <Select
-              value={formData.experience}
-              onValueChange={(value) => setFormData({ ...formData, experience: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select experience" />
-              </SelectTrigger>
-              <SelectContent>
-                {experienceLevels.map((exp) => (
-                  <SelectItem key={exp} value={exp}>{exp}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Years of Experience</Label>
+            <Input
+              value={formData.yearsOfExperience}
+              disabled
+              className="bg-muted/50 cursor-not-allowed"
+            />
+            <p className="text-xs text-muted-foreground">Update from your Profile page</p>
           </div>
 
           <div className="space-y-2">
@@ -209,8 +250,8 @@ export function ApplyJobDialog({ job, open, onOpenChange, onApplySuccess }: Appl
             <Button type="button" variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Apply Now
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              {isSubmitting ? 'Submitting...' : 'Apply Now'}
             </Button>
           </div>
         </form>

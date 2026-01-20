@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { mockJobs } from '@/lib/mockData';
 import { Building2, Check, X, MoreVertical, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

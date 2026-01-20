@@ -1,13 +1,13 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/ui/stat-card';
 import { JobCard } from '@/components/jobs/JobCard';
-import { mockJobs, mockApplications } from '@/lib/mockData';
 import { Briefcase, FileText, Heart, Pin, TrendingUp } from 'lucide-react';
-import { StatusBadge } from '@/components/ui/status-badge';
+import { useJobs } from '@/contexts/JobContext';
 
 export default function FacultyDashboard() {
-  const recentApplications = mockApplications.slice(0, 3);
-  const recommendedJobs = mockJobs.slice(0, 3);
+  const { jobs } = useJobs();
+  const recentApplications: any[] = [];
+  const recommendedJobs = jobs.slice(0, 3);
 
   return (
     <DashboardLayout>
@@ -22,23 +22,22 @@ export default function FacultyDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
             title="Applied Jobs"
-            value={12}
+            value={0}
             icon={FileText}
-            trend={{ value: 8, isPositive: true }}
           />
           <StatCard
-            title="Saved Jobs"
-            value={24}
+            title="Available Jobs"
+            value={jobs.length}
             icon={Briefcase}
           />
           <StatCard
             title="Favorites"
-            value={8}
+            value={0}
             icon={Heart}
           />
           <StatCard
             title="Pinned"
-            value={5}
+            value={0}
             icon={Pin}
           />
         </div>
@@ -51,21 +50,24 @@ export default function FacultyDashboard() {
                 <h2 className="font-semibold text-lg">Recent Applications</h2>
               </div>
               <div className="divide-y divide-border/50">
-                {recentApplications.map((app) => {
-                  const job = mockJobs.find(j => j.id === app.jobId);
-                  return (
-                    <div key={app.id} className="p-4 hover:bg-muted/50 transition-colors">
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <p className="font-medium text-sm text-foreground">{job?.title}</p>
-                          <p className="text-xs text-muted-foreground mt-0.5">{job?.institution}</p>
+                {recentApplications.length > 0 ? (
+                  recentApplications.map((app) => {
+                    const job = jobs.find(j => j.id === app.jobId);
+                    return (
+                      <div key={app.id} className="p-4 hover:bg-muted/50 transition-colors">
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-medium text-sm text-foreground">{job?.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{job?.institution}</p>
+                          </div>
                         </div>
-                        <StatusBadge variant={app.status}>{app.status}</StatusBadge>
+                        <p className="text-xs text-muted-foreground mt-2">Applied {app.appliedAt}</p>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">Applied {app.appliedAt}</p>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                ) : (
+                  <div className="p-4 text-sm text-muted-foreground">No applications yet.</div>
+                )}
               </div>
             </div>
           </div>
@@ -80,16 +82,22 @@ export default function FacultyDashboard() {
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {recommendedJobs.slice(0, 2).map((job) => (
-                <JobCard
-                  key={job.id}
-                  job={job}
-                  onApply={(id) => console.log('Apply:', id)}
-                  onViewDetails={(id) => console.log('View:', id)}
-                  onPin={(id) => console.log('Pin:', id)}
-                  onFavorite={(id) => console.log('Favorite:', id)}
-                />
-              ))}
+              {recommendedJobs.length > 0 ? (
+                recommendedJobs.slice(0, 2).map((job) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    onApply={(id) => console.log('Apply:', id)}
+                    onViewDetails={(id) => console.log('View:', id)}
+                    onPin={(id) => console.log('Pin:', id)}
+                    onFavorite={(id) => console.log('Favorite:', id)}
+                  />
+                ))
+              ) : (
+                <div className="col-span-2 text-center py-8 text-muted-foreground">
+                  No jobs available yet. Check back later!
+                </div>
+              )}
             </div>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/ui/stat-card';
-import { analyticsData, mockApplications, mockJobs } from '@/lib/mockData';
+import { analyticsData } from '@/lib/mockData';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { Users, Building2, Briefcase, FileText, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,10 +19,14 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts';
+import { useJobs } from '@/contexts/JobContext';
 
 const COLORS = ['hsl(226, 70%, 45%)', 'hsl(174, 60%, 40%)', 'hsl(38, 92%, 50%)', 'hsl(142, 70%, 45%)', 'hsl(0, 72%, 51%)'];
 
 export default function AdminDashboard() {
+  const { jobs } = useJobs();
+  const recentApplications: any[] = [];
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -48,9 +52,9 @@ export default function AdminDashboard() {
           />
           <StatCard
             title="Job Posts"
-            value={analyticsData.totalJobPosts}
+            value={jobs.length}
             icon={Briefcase}
-            trend={{ value: 15, isPositive: true }}
+            trend={{ value: 0, isPositive: true }}
           />
           <StatCard
             title="Applications"
@@ -160,25 +164,9 @@ export default function AdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {mockApplications.slice(0, 5).map((app) => {
-                  const job = mockJobs.find(j => j.id === app.jobId);
-                  return (
-                    <div key={app.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-sm font-medium text-primary">
-                            {app.applicantName.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm">{app.applicantName}</p>
-                          <p className="text-xs text-muted-foreground">{job?.title}</p>
-                        </div>
-                      </div>
-                      <StatusBadge variant={app.status}>{app.status}</StatusBadge>
-                    </div>
-                  );
-                })}
+                 {recentApplications.length === 0 && (
+                   <p className="text-sm text-muted-foreground">No applications yet.</p>
+                 )}
               </div>
             </CardContent>
           </Card>
@@ -191,17 +179,21 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {mockJobs.slice(0, 6).map((job, index) => (
-                <div key={job.id} className="flex items-center gap-3 p-4 rounded-lg border border-border/50">
-                  <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Building2 className="h-5 w-5 text-primary" />
+              {jobs.length > 0 ? (
+                jobs.slice(0, 6).map((job) => (
+                  <div key={job.id} className="flex items-center gap-3 p-4 rounded-lg border border-border/50">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Building2 className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{job.institution}</p>
+                      <p className="text-xs text-muted-foreground">{job.applicationsCount} applications</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{job.institution}</p>
-                    <p className="text-xs text-muted-foreground">{job.applicationsCount} applications</p>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground col-span-3">No organizations yet.</p>
+              )}
             </div>
           </CardContent>
         </Card>

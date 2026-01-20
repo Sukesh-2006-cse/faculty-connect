@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useJobs } from '@/contexts/JobContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { subjects, experienceLevels, locations } from '@/lib/mockData';
 import { ArrowLeft, Send } from 'lucide-react';
@@ -20,6 +22,8 @@ import { useToast } from '@/hooks/use-toast';
 export default function PostJob() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addJob } = useJobs();
+  const { user } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     subject: '',
@@ -31,6 +35,15 @@ export default function PostJob() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    addJob({
+      title: formData.title,
+      subject: formData.subject,
+      qualification: formData.qualification,
+      experienceRequired: formData.experience,
+      location: formData.location,
+      description: formData.description,
+      institution: user?.name || 'Organization',
+    });
     toast({
       title: 'Job Posted Successfully',
       description: 'Your job listing is now live.',

@@ -1,6 +1,5 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { mockJobs } from '@/lib/mockData';
-import { Building2, MapPin, Calendar, Users, MoreVertical, Eye, Ban, Check } from 'lucide-react';
+import { Building2, MapPin, Calendar, Users, MoreVertical, Eye, Ban, Check, FileWarning } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -18,8 +17,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Card, CardContent } from '@/components/ui/card';
+import { useJobs } from '@/contexts/JobContext';
 
 export default function AdminJobs() {
+  const { jobs } = useJobs();
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -45,7 +47,7 @@ export default function AdminJobs() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {mockJobs.map((job) => (
+                {jobs.map((job) => (
                   <TableRow key={job.id}>
                     <TableCell>
                       <span className="font-medium">{job.title}</span>
@@ -102,6 +104,16 @@ export default function AdminJobs() {
                     </TableCell>
                   </TableRow>
                 ))}
+                {jobs.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
+                      <div className="flex items-center justify-center gap-2">
+                        <FileWarning className="h-5 w-5" />
+                        No jobs available yet.
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </CardContent>

@@ -1,15 +1,16 @@
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { StatCard } from '@/components/ui/stat-card';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { mockJobs, mockApplications } from '@/lib/mockData';
-import { Briefcase, Users, UserCheck, TrendingUp, Eye } from 'lucide-react';
+import { Briefcase, Users, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { useJobs } from '@/contexts/JobContext';
 
 export default function OrganizationDashboard() {
   const navigate = useNavigate();
-  const totalApplications = mockApplications.length;
-  const shortlistedCount = mockApplications.filter(a => a.status === 'shortlisted').length;
+  const { jobs } = useJobs();
+  const totalApplications = 0;
+  const shortlistedCount = 0;
 
   return (
     <DashboardLayout>
@@ -29,7 +30,7 @@ export default function OrganizationDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard
             title="Total Jobs Posted"
-            value={mockJobs.length}
+            value={jobs.length}
             icon={Briefcase}
             trend={{ value: 12, isPositive: true }}
           />
@@ -56,21 +57,7 @@ export default function OrganizationDashboard() {
               </Button>
             </div>
             <div className="divide-y divide-border/50">
-              {mockApplications.slice(0, 4).map((app) => {
-                const job = mockJobs.find(j => j.id === app.jobId);
-                return (
-                  <div key={app.id} className="p-4 hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium text-sm">{app.applicantName}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{job?.title}</p>
-                      </div>
-                      <StatusBadge variant={app.status}>{app.status}</StatusBadge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-2">{app.qualification} • {app.experience}</p>
-                  </div>
-                );
-              })}
+              <div className="p-4 text-sm text-muted-foreground">No applications yet.</div>
             </div>
           </div>
 
@@ -83,7 +70,7 @@ export default function OrganizationDashboard() {
               </Button>
             </div>
             <div className="divide-y divide-border/50">
-              {mockJobs.slice(0, 4).map((job) => (
+              {jobs.map((job) => (
                 <div key={job.id} className="p-4 hover:bg-muted/50 transition-colors">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -97,6 +84,9 @@ export default function OrganizationDashboard() {
                   </div>
                 </div>
               ))}
+              {jobs.length === 0 && (
+                <div className="p-4 text-sm text-muted-foreground">No jobs posted yet.</div>
+              )}
             </div>
           </div>
         </div>

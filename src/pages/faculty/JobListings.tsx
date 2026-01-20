@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { JobCard } from '@/components/jobs/JobCard';
-import { mockJobs, subjects, experienceLevels, locations, Job } from '@/lib/mockData';
-import { Search, Filter, X } from 'lucide-react';
+import { subjects, experienceLevels, locations } from '@/lib/mockData';
+import { Search, Filter, X, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import {
@@ -24,27 +24,30 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { ApplyJobDialog } from '@/components/jobs/ApplyJobDialog';
 import { OrganizationDetailsDialog } from '@/components/jobs/OrganizationDetailsDialog';
+import { Job, useJobs } from '@/contexts/JobContext';
 
 export default function JobListings() {
+  const { jobs, loading, toggleFavorite, togglePinned, favoriteJobs, pinnedJobs, appliedJobs, applyToJob } = useJobs();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [selectedExperience, setSelectedExperience] = useState<string>('');
   const [selectedLocation, setSelectedLocation] = useState<string>('');
-  const [pinnedJobs, setPinnedJobs] = useState<string[]>([]);
-  const [favoriteJobs, setFavoriteJobs] = useState<string[]>([]);
-  const [appliedJobs, setAppliedJobs] = useState<string[]>([]);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [applyDialogOpen, setApplyDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const { toast } = useToast();
 
-  const filteredJobs = mockJobs.filter((job) => {
+  const normalizedSubject = selectedSubject === 'all' ? '' : selectedSubject;
+  const normalizedExperience = selectedExperience === 'all' ? '' : selectedExperience;
+  const normalizedLocation = selectedLocation === 'all' ? '' : selectedLocation;
+
+  const filteredJobs = jobs.filter((job) => {
     const matchesSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.institution.toLowerCase().includes(searchQuery.toLowerCase()) ||
       job.subject.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSubject = !selectedSubject || job.subject === selectedSubject;
-    const matchesExperience = !selectedExperience || job.experienceRequired === selectedExperience;
-    const matchesLocation = !selectedLocation || job.location === selectedLocation;
+    const matchesSubject = !normalizedSubject || job.subject === normalizedSubject;
+    const matchesExperience = !normalizedExperience || job.experienceRequired === normalizedExperience;
+    const matchesLocation = !normalizedLocation || job.location === normalizedLocation;
     return matchesSearch && matchesSubject && matchesExperience && matchesLocation;
   });
 
@@ -57,19 +60,20 @@ export default function JobListings() {
   };
 
   const handleApply = (jobId: string) => {
-    const job = mockJobs.find(j => j.id === jobId);
+    const job = jobs.find(j => j.id === jobId);
     if (job) {
       setSelectedJob(job);
       setApplyDialogOpen(true);
     }
   };
 
-  const handleApplySuccess = (jobId: string) => {
-    setAppliedJobs([...appliedJobs, jobId]);
+  const handleApplySuccess = (jobId: string, applicantData: { name: string; email: string; qualification: string; experience: string }) => {
+    applyToJob(jobId, applicantData);
+    toast({ description: 'Application submitted successfully!' });
   };
 
   const handleViewDetails = (jobId: string) => {
-    const job = mockJobs.find(j => j.id === jobId);
+    const job = jobs.find(j => j.id === jobId);
     if (job) {
       setSelectedJob(job);
       setDetailsDialogOpen(true);
@@ -77,23 +81,13 @@ export default function JobListings() {
   };
 
   const handlePin = (jobId: string) => {
-    if (pinnedJobs.includes(jobId)) {
-      setPinnedJobs(pinnedJobs.filter(id => id !== jobId));
-      toast({ description: 'Job unpinned' });
-    } else {
-      setPinnedJobs([...pinnedJobs, jobId]);
-      toast({ description: 'Job pinned' });
-    }
+    togglePinned(jobId);
+    toast({ description: pinnedJobs.includes(jobId) ? 'Job unpinned' : 'Job pinned' });
   };
 
   const handleFavorite = (jobId: string) => {
-    if (favoriteJobs.includes(jobId)) {
-      setFavoriteJobs(favoriteJobs.filter(id => id !== jobId));
-      toast({ description: 'Removed from favorites' });
-    } else {
-      setFavoriteJobs([...favoriteJobs, jobId]);
-      toast({ description: 'Added to favorites' });
-    }
+    toggleFavorite(jobId);
+    toast({ description: favoriteJobs.includes(jobId) ? 'Removed from favorites' : 'Added to favorites' });
   };
 
   const FilterContent = () => (
@@ -149,7 +143,7 @@ export default function JobListings() {
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-foreground">Job Listings</h1>
-          <p className="text-muted-foreground mt-1">Explore {mockJobs.length} open positions</p>
+          <p className="text-muted-foreground mt-1">Explore {jobs.length} open positions</p>
         </div>
 
         {/* Search and Filters */}
@@ -251,33 +245,63 @@ export default function JobListings() {
         )}
 
         {/* Results */}
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredJobs.length} of {mockJobs.length} jobs
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <div className="h-8 w-1 bg-gradient-to-b from-primary to-primary/40 rounded-full" />
+            <p className="text-sm font-semibold text-foreground">
+              {filteredJobs.length} {filteredJobs.length === 1 ? 'Position' : 'Positions'} Available
+            </p>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            from {jobs.length} total
           </p>
         </div>
 
-        {/* Job Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-          {filteredJobs.map((job) => (
-            <JobCard
-              key={job.id}
-              job={job}
-              onApply={handleApply}
-              onViewDetails={handleViewDetails}
-              onPin={handlePin}
-              onFavorite={handleFavorite}
-              isPinned={pinnedJobs.includes(job.id)}
-              isFavorite={favoriteJobs.includes(job.id)}
-              isApplied={appliedJobs.includes(job.id)}
-            />
-          ))}
-        </div>
-
-        {filteredJobs.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">No jobs found matching your criteria.</p>
-            <Button variant="link" onClick={clearFilters}>Clear filters</Button>
+        {/* Job List - Vertical Feed Style */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-16 space-y-3">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground">Loading jobs...</p>
+          </div>
+        ) : filteredJobs.length > 0 ? (
+          <div className="bg-gradient-to-br from-card via-card to-muted/10 rounded-xl border-2 border-border/50 shadow-xl shadow-black/5 overflow-hidden backdrop-blur-sm p-6">
+            <div className="grid grid-cols-1 gap-5">
+              {filteredJobs.map((job, index) => (
+                <div
+                  key={job.id}
+                  className="animate-in fade-in slide-in-from-bottom-4 duration-500"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <JobCard
+                    job={job}
+                    onApply={handleApply}
+                    onViewDetails={handleViewDetails}
+                    onPin={handlePin}
+                    onFavorite={handleFavorite}
+                    isPinned={pinnedJobs.includes(job.id)}
+                    isFavorite={favoriteJobs.includes(job.id)}
+                    isApplied={appliedJobs.includes(job.id)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="text-center py-16 px-4">
+            <div className="max-w-md mx-auto space-y-4">
+              <div className="h-24 w-24 mx-auto rounded-full bg-muted/50 flex items-center justify-center">
+                <Search className="h-12 w-12 text-muted-foreground/50" />
+              </div>
+              <div className="space-y-2">
+                <p className="text-lg font-semibold text-foreground">No jobs found</p>
+                <p className="text-sm text-muted-foreground">
+                  We couldn't find any positions matching your criteria. Try adjusting your filters.
+                </p>
+              </div>
+              <Button variant="outline" onClick={clearFilters} className="shadow-sm">
+                Clear all filters
+              </Button>
+            </div>
           </div>
         )}
       </div>

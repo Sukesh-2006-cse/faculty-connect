@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
-import { mockApplications, mockJobs, Application } from '@/lib/mockData';
 import { StatusBadge } from '@/components/ui/status-badge';
-import { Download, UserCheck, UserX, CalendarCheck, Mail } from 'lucide-react';
+import { Download, UserCheck, UserX, CalendarCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -21,9 +20,10 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { useJobs } from '@/contexts/JobContext';
 
 export default function Applications() {
-  const [applications, setApplications] = useState(mockApplications);
+  const { applications, jobs, updateApplicationStatus } = useJobs();
   const [filterJob, setFilterJob] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const { toast } = useToast();
@@ -34,10 +34,8 @@ export default function Applications() {
     return matchesJob && matchesStatus;
   });
 
-  const updateStatus = (appId: string, newStatus: Application['status']) => {
-    setApplications(apps => 
-      apps.map(app => app.id === appId ? { ...app, status: newStatus } : app)
-    );
+  const updateStatus = (appId: string, newStatus: 'applied' | 'shortlisted' | 'interview' | 'rejected') => {
+    updateApplicationStatus(appId, newStatus);
     toast({
       title: 'Status Updated',
       description: `Application marked as ${newStatus}`,
@@ -67,7 +65,7 @@ export default function Applications() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Jobs</SelectItem>
-                    {mockJobs.map((job) => (
+                    {jobs.map((job) => (
                       <SelectItem key={job.id} value={job.id}>{job.title}</SelectItem>
                     ))}
                   </SelectContent>
@@ -108,7 +106,7 @@ export default function Applications() {
               </TableHeader>
               <TableBody>
                 {filteredApplications.map((app) => {
-                  const job = mockJobs.find(j => j.id === app.jobId);
+                  const job = jobs.find(j => j.id === app.jobId);
                   return (
                     <TableRow key={app.id}>
                       <TableCell>
@@ -122,7 +120,7 @@ export default function Applications() {
                       <TableCell className="text-sm">{app.experience}</TableCell>
                       <TableCell>
                         <StatusBadge variant={app.status}>
-                          {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                          {app.status?.charAt(0).toUpperCase() + app.status?.slice(1)}
                         </StatusBadge>
                       </TableCell>
                       <TableCell>

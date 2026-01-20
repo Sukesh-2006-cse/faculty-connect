@@ -1,10 +1,52 @@
+import { useState } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { JobCard } from '@/components/jobs/JobCard';
-import { mockJobs } from '@/lib/mockData';
 import { Heart } from 'lucide-react';
+import { useJobs } from '@/contexts/JobContext';
+import { useToast } from '@/hooks/use-toast';
+import { ApplyJobDialog } from '@/components/jobs/ApplyJobDialog';
+import { OrganizationDetailsDialog } from '@/components/jobs/OrganizationDetailsDialog';
+import { Job } from '@/contexts/JobContext';
 
 export default function FavoritesPage() {
-  const favoriteJobs = mockJobs.slice(0, 3);
+  const { jobs, favoriteJobs, toggleFavorite, togglePinned, pinnedJobs, appliedJobs, applyToJob } = useJobs();
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [applyDialogOpen, setApplyDialogOpen] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const { toast } = useToast();
+  
+  const favoriteJobsList = jobs.filter((job) => favoriteJobs.includes(job.id));
+
+  const handleApply = (jobId: string) => {
+    const job = jobs.find(j => j.id === jobId);
+    if (job) {
+      setSelectedJob(job);
+      setApplyDialogOpen(true);
+    }
+  };
+
+  const handleApplySuccess = (jobId: string, applicantData: { name: string; email: string; qualification: string; experience: string }) => {
+    applyToJob(jobId, applicantData);
+    toast({ description: 'Application submitted successfully!' });
+  };
+
+  const handleViewDetails = (jobId: string) => {
+    const job = jobs.find(j => j.id === jobId);
+    if (job) {
+      setSelectedJob(job);
+      setDetailsDialogOpen(true);
+    }
+  };
+
+  const handlePin = (jobId: string) => {
+    togglePinned(jobId);
+    toast({ description: pinnedJobs.includes(jobId) ? 'Job unpinned' : 'Job pinned' });
+  };
+
+  const handleFavorite = (jobId: string) => {
+    toggleFavorite(jobId);
+    toast({ description: 'Removed from favorites' });
+  };
 
   return (
     <DashboardLayout>
@@ -14,17 +56,19 @@ export default function FavoritesPage() {
           <p className="text-muted-foreground mt-1">Jobs you've saved for later</p>
         </div>
 
-        {favoriteJobs.length > 0 ? (
+        {favoriteJobsList.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {favoriteJobs.map((job) => (
+            {favoriteJobsList.map((job) => (
               <JobCard
                 key={job.id}
                 job={job}
                 isFavorite={true}
-                onApply={(id) => console.log('Apply:', id)}
-                onViewDetails={(id) => console.log('View:', id)}
-                onPin={(id) => console.log('Pin:', id)}
-                onFavorite={(id) => console.log('Remove favorite:', id)}
+                isPinned={pinnedJobs.includes(job.id)}
+                isApplied={appliedJobs.includes(job.id)}
+                onApply={handleApply}
+                onViewDetails={handleViewDetails}
+                onPin={handlePin}
+                onFavorite={handleFavorite}
               />
             ))}
           </div>
@@ -35,6 +79,22 @@ export default function FavoritesPage() {
           </div>
         )}
       </div>
+
+      {selectedJob && (
+        <>
+          <ApplyJobDialog
+            job={selectedJob}
+            open={applyDialogOpen}
+            onOpenChange={setApplyDialogOpen}
+            onApplySuccess={handleApplySuccess}
+          />
+          <OrganizationDetailsDialog
+            job={selectedJob}
+            open={detailsDialogOpen}
+            onOpenChange={setDetailsDialogOpen}
+          />
+        </>
+      )}
     </DashboardLayout>
   );
 }
